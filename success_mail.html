@@ -1,0 +1,23 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Email envoyé</title>
+    <style>
+        body { font-family: sans-serif; text-align: center; padding-top: 50px; }
+        .loader { color: #666; font-size: 0.9em; }
+    </style>
+    
+    <script>
+        setTimeout(function() {
+            window.location.href = "{{ url_for('historique_expeditions') }}";
+        }, 3000); // 3000 millisecondes = 3 secondes
+    </script>
+</head>
+<body>
+    <h1>✅ Email envoyé avec succès !</h1>
+    <p>Le Bon de Livraison a été expédié au(x) client(s).</p>
+    <p class="loader">Redirection vers l'historique dans quelques secondes...</p>
+    
+    <p><a href="{{ url_for('historique_expeditions') }}">Cliquez ici si la redirection ne fonctionne pas</a></p>
+</body>
+</html>
