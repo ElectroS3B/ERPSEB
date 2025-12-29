@@ -1,0 +1,38 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">✏️ Modifier la parcelle : {{ parcelle.nom }}</h2>
+
+    <form method="POST"> <div class="card shadow-sm">
+            <div class="card-body">
+                <div class="mb-3">
+                    <label class="form-label">Nom de la parcelle</label>
+                    <input type="text" name="nom" class="form-control" value="{{ parcelle.nom }}" required>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Code GGN spécifique (optionnel)</label>
+                    <input type="text" name="ggn" class="form-control" value="{{ parcelle.ggn or '' }}" placeholder="Laisser vide pour utiliser le GGN du producteur">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Producteur</label>
+                    <select name="prod_id" class="form-select">
+                        {% for prod in producteurs %}
+                        <option value="{{ prod.id }}" {% if prod.id == parcelle.producteur_id %}selected{% endif %}>
+                            {{ prod.nom }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mt-4">
+                    <button type="submit" class="btn btn-success">✅ Enregistrer les modifications</button>
+                    <a href="/referentiel" class="btn btn-secondary">Annuler</a>
+                </div>
+            </div>
+        </div>
+    </form>
+</div>
+{% endblock %}

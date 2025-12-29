@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriStock - Gestion de Production</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <link href="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/css/select2.min.css" rel="stylesheet" />
+    <style>
+        body { background-color: #f4f7f6; }
+        .navbar { margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 10px; }
+        /* Ajustement pour que Select2 s'intègre bien avec Bootstrap 5 */
+        .select2-container--default .select2-selection--single {
+            height: 31px !important;
+            padding: 2px 0;
+            border: 1px solid #dee2e6;
+        }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">🌱 AgriStock</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/stock">📦 Stock</a></li>
+                    <li class="nav-item">
+                        <a class="nav-link fw-bold text-white" href="/historique_commandes">📝 Commandes</a>
+                    </li>
+                    <li class="nav-item"><a class="nav-link" href="/ajouter_produit">➕ Produit</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning fw-bold" href="{{ url_for('nouvelle_livraison') }}">🚚 Expédition</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('historique') }}">🔍 Historique</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('gestion_clients') }}">👥 Clients</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('gestion_tarifs') }}">💰 Tarifs Clients</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/transporteurs">🚛 Transporteurs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="{{ url_for('historique_livraisons') }}">📋 Historique BL</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/referentiel">🗂️ Référentiel</a></li>
+                </ul>
+                <ul class="navbar-nav">
+                    <li class="nav-item">
+                        <a class="nav-link btn btn-outline-light btn-sm px-3" href="/parametres">⚙️ Configuration</a>
+                    </li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        {% block content %}{% endblock %}
+    </div>
+
+    <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/select2@4.1.0-rc.0/dist/js/select2.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+    
+    <script>
+        $(document).ready(function() {
+            $('.select2-enable').select2({
+                placeholder: "Cliquer pour rechercher...",
+                allowClear: true,
+                width: '100%'
+            });
+        });
+    </script>
+</body>
+</html>

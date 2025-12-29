@@ -1,0 +1,171 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>💰 Gestion des Tarifs</h2>
+        <button class="btn btn-primary" type="button" data-bs-toggle="collapse" data-bs-target="#collapseNouveau">
+            ➕ Ajouter un nouveau tarif
+        </button>
+    </div>
+
+    <div class="collapse mb-4" id="collapseNouveau">
+        <div class="card card-body shadow-sm border-primary">
+            <h5 class="card-title text-primary">💰 Nouveau Tarif Spécifique</h5>
+            <form method="POST" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small fw-bold">Client</label>
+                    <select name="client_id" class="form-select" required>
+                        <option value="">-- Sélectionner --</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}">{{ c.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Type</label>
+                    <select name="type_id" id="new_type_id" class="form-select" required onchange="filtrerVarietesNew()">
+                        <option value="">-- Type --</option>
+                        {% for t in types %}
+                        <option value="{{ t.id }}">{{ t.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Variété</label>
+                    <select name="variete_id" id="new_variete_id" class="form-select">
+                        <option value="">-- Toutes --</option>
+                        {% for v in varietes %}
+                        <option value="{{ v.id }}" data-type="{{ v.type_produit_id }}">{{ v.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="col-md-1">
+                    <label class="form-label small fw-bold">Calibre</label>
+                    <select name="calibre_id" class="form-select">
+                        <option value="">--</option>
+                        {% for c in calibres %}
+                        <option value="{{ c.id }}">{{ c.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Conditionnement</label>
+                    <select name="cond_id" class="form-select">
+                        <option value="">-- Tout --</option>
+                        {% for cond in conditionnements %}
+                        <option value="{{ cond.id }}">{{ cond.nom }} ({{ cond.poids_unitaire }}kg)</option>
+                        {% endfor %}
+                    </select>
+                </div>
+    
+                <div class="col-md-2">
+                    <label class="form-label small fw-bold">Prix HT (€)</label>
+                    <input type="number" step="0.001" name="prix_ht" class="form-control" required placeholder="0.000">
+                </div>
+    
+                <div class="col-md-12 text-end">
+                    <button type="submit" class="btn btn-success px-4">Enregistrer le Tarif</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card bg-light mb-4 shadow-sm border-0">
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('gestion_tarifs') }}" class="row g-3 align-items-end">
+                <div class="col-md-8">
+                    <label class="form-label fw-bold">Filtrer la liste par Client</label>
+                    <select name="client_id" class="form-select">
+                        <option value="">Tous les clients</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}" {% if f_client|string == c.id|string %}selected{% endif %}>
+                            {{ c.nom }}
+                        </option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <button type="submit" class="btn btn-dark w-100">🔍 Filtrer</button>
+                </div>
+                <div class="col-md-2">
+                    <a href="{{ url_for('gestion_tarifs') }}" class="btn btn-outline-secondary w-100">Effacer</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow-sm">
+        <div class="table-responsive">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-light">
+                    <tr>
+                        <th>Client</th>
+                        <th>Produit (Variété / Calibre / Cond.)</th>
+                        <th style="width: 200px;">Prix HT (€)</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for tarif in tarifs %}
+                    <tr>
+                        <td><strong>{{ tarif.client.nom }}</strong></td>
+                        <td>
+                            {{ tarif.type_rel.nom }} 
+                            <span class="text-muted small">
+                                (
+                                {{ tarif.variete_rel.nom if tarif.variete_rel else 'Toute' }} / 
+                                {{ tarif.calibre_rel.nom if tarif.calibre_rel else 'Tout' }} / 
+                                {{ tarif.cond_rel.nom if tarif.cond_rel else 'Tout' }}
+                                )
+                            </span>
+                        </td>
+                        <td>
+                            <form method="POST" class="d-flex gap-1">
+                                <input type="hidden" name="client_id" value="{{ tarif.client_id }}">
+                                <input type="hidden" name="type_id" value="{{ tarif.type_id }}">
+                                <input type="hidden" name="variete_id" value="{{ tarif.variete_id or '' }}">
+                                <input type="hidden" name="calibre_id" value="{{ tarif.calibre_id or '' }}">
+                                <input type="hidden" name="cond_id" value="{{ tarif.cond_id or '' }}">
+                                
+                                <input type="number" step="0.001" name="prix_ht" class="form-control form-control-sm" value="{{ tarif.prix_ht }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success">OK</button>
+                            </form>
+                        </td>
+                        <td class="text-end">
+                            <a href="{{ url_for('supprimer_tarif', id=tarif.id) }}" class="btn btn-sm btn-link text-danger text-decoration-none" onclick="return confirm('Supprimer ce tarif ?')">🗑️ Supprimer</a>
+                        </td>
+                    </tr>
+                    {% endfor %}
+                    {% if not tarifs %}
+                    <tr>
+                        <td colspan="4" class="text-center py-4 text-muted">Aucun tarif trouvé pour ce client.</td>
+                    </tr>
+                    {% endif %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+    function filtrerVarietesNew() {
+        const typeId = document.getElementById('new_type_id').value;
+        const varieteSelect = document.getElementById('new_variete_id');
+        const options = varieteSelect.querySelectorAll('option');
+    
+        options.forEach(opt => {
+            const optType = opt.getAttribute('data-type');
+            if (opt.value === "" || optType === typeId) {
+                opt.style.display = "block";
+            } else {
+                opt.style.display = "none";
+            }
+        });
+        varieteSelect.value = "";
+    }
+</script>
+{% endblock %}

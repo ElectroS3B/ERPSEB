@@ -1,0 +1,26 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card p-4 shadow-sm mx-auto" style="max-width: 600px;">
+    <h3 class="mb-4">Modifier la Variété</h3>
+    <form method="POST">
+        <div class="mb-3">
+            <label class="form-label">Nom de la variété</label>
+            <input type="text" name="nom" class="form-control" value="{{ variete.nom }}" required>
+        </div>
+        <div class="mb-3">
+            <label class="form-label">Type de produit rattaché</label>
+            <select name="type_id" class="form-select">
+                {% for t in types_prod %}
+                <option value="{{ t.id }}" {% if t.id == variete.type_produit_id %}selected{% endif %}>
+                    {{ t.nom }}
+                </option>
+                {% endfor %}
+            </select>
+        </div>
+        <div class="d-flex gap-2">
+            <button type="submit" class="btn btn-success">Enregistrer les modifications</button>
+            <a href="/referentiel" class="btn btn-secondary">Annuler</a>
+        </div>
+    </form>
+</div>
+{% endblock %}

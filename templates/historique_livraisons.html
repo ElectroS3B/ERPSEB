@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📋 Suivi et Facturation des Expéditions</h2>
+        <a href="{{ url_for('nouvelle_livraison') }}" class="btn btn-primary">🚚 Nouvelle Livraison</a>
+    </div>
+
+    <div class="card shadow-sm mb-4">
+        <div class="card-header bg-dark text-white fw-bold">🔍 Filtres de recherche</div>
+        <div class="card-body">
+            <form method="GET" action="{{ url_for('historique_livraisons') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="form-label small">Client</label>
+                    <select name="client_id" class="form-select form-select-sm">
+                        <option value="">Tous les clients</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}" {% if request.args.get('client_id')|int == c.id %}selected{% endif %}>{{ c.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Du</label>
+                    <input type="date" name="date_debut" class="form-control form-control-sm" value="{{ date_debut }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="form-label small">Au</label>
+                    <input type="date" name="date_fin" class="form-control form-control-sm" value="{{ date_fin }}">
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">N° de BL</label>
+                    <input type="text" name="numero_bl" class="form-control form-control-sm" 
+                           placeholder="Ex: 2025-001" value="{{ f_numero_bl if f_numero_bl else '' }}">
+                </div>
+                <div class="col-md-3">
+                    <label class="form-label small">État Facturation</label>
+                    <select name="statut_facture" class="form-select form-select-sm">
+                        <option value="">Tous</option>
+                        <option value="non_facture" {% if request.args.get('statut_facture') == 'non_facture' %}selected{% endif %}>🚫 Non facturés</option>
+                        <option value="facture" {% if request.args.get('statut_facture') == 'facture' %}selected{% endif %}>✅ Facturés</option>
+                    </select>
+                </div>
+                <div class="col-md-2 d-flex align-items-end">
+                    <button type="submit" class="btn btn-primary btn-sm w-100">Filtrer</button>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>Date</th>
+                        <th>N° BL</th>
+                        <th>Client</th>
+                        <th>Transporteur</th>
+                        <th>N° Facture</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for liv in livraisons %}
+                    <tr>
+                        <td>{{ liv.date_livraison.strftime('%d/%m/%Y') }}</td>
+                        <td><strong>{{ liv.numero_bl or liv.id }}</strong></td>
+                        <td>{{ liv.client_rel.nom }}</td>
+                        <td class="small">{{ liv.transporteur_rel.nom if liv.transporteur_rel else 'N/A' }}</td>
+                        <td style="width: 200px;">
+                            <form action="{{ url_for('update_facture', livraison_id=liv.id) }}" method="POST" class="d-flex">
+                                <input type="text" name="numero_facture" 
+                                       class="form-control form-control-sm {% if not liv.numero_facture %}border-danger{% endif %}" 
+                                       placeholder="N° Facture..." 
+                                       value="{{ liv.numero_facture or '' }}">
+                                <button type="submit" class="btn btn-sm btn-outline-success ms-1">OK</button>
+                            </form>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a href="{{ url_for('voir_pdf', id=liv.id) }}" class="btn btn-sm btn-outline-primary" target="_blank" title="PDF">
+                                    📄 PDF
+                                </a>
+                                
+                                <a href="{{ url_for('envoyer_bl', id=liv.id) }}" class="btn btn-sm btn-outline-info" title="Email" onclick="return confirm('Envoyer par email ?')">
+                                    📧
+                                </a>
+
+                                <a href="{{ url_for('modifier_livraison', id=liv.id) }}" class="btn btn-sm btn-outline-warning" title="Modifier">
+                                    ✏️
+                                </a>
+
+                                <a href="{{ url_for('supprimer_livraison', id=liv.id) }}" class="btn btn-sm btn-outline-danger" 
+                                   onclick="return confirm('Supprimer ce BL ?')" title="Supprimer">
+                                    🗑️
+                                </a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">Aucune livraison trouvée pour ces critères.</td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+{% endblock %}

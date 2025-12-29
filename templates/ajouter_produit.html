@@ -1,0 +1,111 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="card shadow-sm p-4">
+    <h3 class="mb-4">➕ Enregistrer un Produit Fini</h3>
+    <form method="POST">
+        <div class="row g-3">
+            <div class="col-md-6">
+                <label class="form-label">Type de produit</label>
+                <select name="type_id" id="type_id" class="form-select" onchange="filtrerVarietes()" required>
+                    <option value="">-- Choisir un type --</option>
+                    {% for t in types_prod %}
+                    <option value="{{ t.id }}">{{ t.nom }}</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-6">
+                <label class="form-label">Variété</label>
+                <select name="variete_id" id="variete_id" class="form-select" required>
+                    <option value="">-- Choisir d'abord un type --</option>
+                </select>
+            </div>
+
+           <div class="col-md-4">
+    		<label class="form-label fw-bold">Calibre</label>
+    		<select name="calibre_id" class="form-select" required>
+     		   <option value="" selected disabled>Choisir le calibre...</option>
+      		  {% for c in calibres %}
+        		<option value="{{ c.id }}">{{ c.nom }}</option>
+       			 {% endfor %}
+   		 </select>
+        </div>
+
+
+            <div class="col-md-4">
+                <label class="form-label">Parcelle d'origine</label>
+                <select name="parcelle_id" class="form-select" required>
+                    {% for p in parcelles %}
+                    <option value="{{ p.id }}">{{ p.nom }} ({{ p.producteur_rel.nom }})</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Conditionnement</label>
+                <select name="cond_id" id="cond_id" class="form-select" onchange="majPoidsAuto()" required>
+                    {% for c in conds %}
+                    <option value="{{ c.id }}" data-poids="{{ c.poids_unite }}">{{ c.nom }} (défaut: {{ c.poids_unite }}kg)</option>
+                    {% endfor %}
+                </select>
+            </div>
+
+            <div class="col-md-4">
+                <label class="form-label">Nombre d'unités (ex: 1 BigBag)</label>
+                <input type="number" name="nb_unites" id="nb_unites" class="form-control" value="1" oninput="calculerTotal()" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Poids Unitaire Réel (kg)</label>
+                <input type="number" step="0.01" name="poids_unite_reel" id="poids_unite_reel" class="form-control" oninput="calculerTotal()" required>
+            </div>
+            <div class="col-md-4">
+                <label class="form-label">Poids Total (kg)</label>
+                <input type="number" step="0.01" name="poids_total" id="poids_total" class="form-control" readonly bg-light>
+            </div>
+        </div>
+
+        <div class="mt-4">
+            <button type="submit" class="btn btn-primary btn-lg w-100">💾 Enregistrer et imprimer l'étiquette</button>
+        </div>
+    </form>
+</div>
+
+<script>
+// 1. Filtrage des variétés selon le type choisi
+const varietesParType = {
+    {% for t in types_prod %}
+    "{{ t.id }}": [{% for v in t.varietes %}{id: "{{ v.id }}", nom: "{{ v.nom }}"},{% endfor %}],
+    {% endfor %}
+};
+
+function filtrerVarietes() {
+    const typeId = document.getElementById('type_id').value;
+    const varieteSelect = document.getElementById('variete_id');
+    varieteSelect.innerHTML = '<option value="">-- Choisir --</option>';
+    
+    if (varietesParType[typeId]) {
+        varietesParType[typeId].forEach(v => {
+            varieteSelect.innerHTML += `<option value="${v.id}">${v.nom}</option>`;
+        });
+    }
+}
+
+// 2. Mise à jour automatique du poids lors du choix du conditionnement
+function majPoidsAuto() {
+    const select = document.getElementById('cond_id');
+    const poidsDefaut = select.options[select.selectedIndex].getAttribute('data-poids');
+    document.getElementById('poids_unite_reel').value = poidsDefaut;
+    calculerTotal();
+}
+
+// 3. Calcul du poids total
+function calculerTotal() {
+    const nb = document.getElementById('nb_unites').value || 0;
+    const poidsU = document.getElementById('poids_unite_reel').value || 0;
+    document.getElementById('poids_total').value = (nb * poidsU).toFixed(2);
+}
+
+// Initialisation au chargement
+window.onload = majPoidsAuto;
+</script>
+{% endblock %}

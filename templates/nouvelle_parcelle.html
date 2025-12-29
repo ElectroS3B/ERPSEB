@@ -1,0 +1,49 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow">
+        <div class="card-header bg-success text-white">Ajouter une Parcelle</div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Nom de la parcelle</label>
+                    <input type="text" name="nom" class="form-control" required placeholder="Ex: Champ du Moulin">
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Producteur</label>
+                    <select name="producteur_id" id="select_producteur" class="form-select" required onchange="remplirGGN()">
+                        <option value="">--- Choisir un producteur ---</option>
+                        {% for prod in producteurs %}
+                        <option value="{{ prod.id }}" data-ggn="{{ prod.ggn or '' }}">{{ prod.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+
+                <div class="mb-3">
+                    <label class="form-label">Numéro GGN (Traçabilité)</label>
+                    <input type="text" name="ggn" id="input_ggn" class="form-control" placeholder="Sera rempli automatiquement">
+                    <small class="text-muted">Le GGN du producteur est proposé par défaut, mais vous pouvez le modifier pour cette parcelle.</small>
+                </div>
+
+                <button type="submit" class="btn btn-success">Enregistrer la parcelle</button>
+            </form>
+        </div>
+    </div>
+</div>
+
+<script>
+function remplirGGN() {
+    // Récupérer l'option sélectionnée
+    const select = document.getElementById('select_producteur');
+    const selectedOption = select.options[select.selectedIndex];
+    
+    // Récupérer le GGN stocké dans l'attribut data-ggn
+    const ggnProducteur = selectedOption.getAttribute('data-ggn');
+    
+    // Remplir le champ GGN
+    const inputGGN = document.getElementById('input_ggn');
+    inputGGN.value = ggnProducteur;
+}
+</script>
+{% endblock %}

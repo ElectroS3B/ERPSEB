@@ -1,0 +1,125 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>AgriStock - Clients</title>
+    <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
+    <style>
+        body { background-color: #f4f7f6; }
+        .navbar { margin-bottom: 30px; box-shadow: 0 2px 4px rgba(0,0,0,0.1); }
+        .card { border: none; border-radius: 10px; }
+        .table middle td { vertical-align: middle; }
+    </style>
+</head>
+<body>
+    <nav class="navbar navbar-expand-lg navbar-dark bg-success">
+        <div class="container-fluid">
+            <a class="navbar-brand" href="/">🌱 AgriStock</a>
+            <button class="navbar-toggler" type="button" data-bs-toggle="collapse" data-bs-target="#navbarNav">
+                <span class="navbar-toggler-icon"></span>
+            </button>
+            <div class="collapse navbar-collapse" id="navbarNav">
+                <ul class="navbar-nav me-auto">
+                    <li class="nav-item"><a class="nav-link" href="/stock">📦 Stock Actuel</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/ajouter_produit">➕ Nouveau Produit</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/referentiel">📋 Référentiel</a></li>
+                    <li class="nav-item"><a class="nav-link text-warning fw-bold" href="/nouvelle_livraison">🚚 Expédition</a></li>
+                </ul>
+                <ul class="navbar-nav ms-auto">
+                    <li class="nav-item"><a class="nav-link" href="/historique">🔍 Historique</a></li>
+                    <li class="nav-item"><a class="nav-link active" href="/clients">👥 Clients</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/transporteurs">🚛 Transporteurs</a></li>
+                    <li class="nav-item"><a class="nav-link" href="/historique_livraisons">📋 Historique BL</a></li>
+                    <li class="nav-item"><a class="nav-link btn btn-outline-light btn-sm ms-lg-2 px-3" href="/parametres">⚙️</a></li>
+                </ul>
+            </div>
+        </div>
+    </nav>
+
+    <div class="container pb-5">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-primary text-white">Nouveau Client</div>
+                    <div class="card-body">
+                        <form method="POST">
+                            <div class="mb-2">
+                                <label class="form-label small">Nom / Raison Sociale</label>
+                                <input type="text" name="nom" class="form-control form-control-sm" required>
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Adresse</label>
+                                <textarea name="adresse" class="form-control form-control-sm" rows="2"></textarea>
+                            </div>
+                            <div class="row">
+                                <div class="col-8 mb-2">
+                                    <label class="form-label small">Ville</label>
+                                    <input type="text" name="ville" class="form-control form-control-sm">
+                                </div>
+                                <div class="col-4 mb-2">
+                                    <label class="form-label small">CP</label>
+                                    <input type="text" name="code_postal" class="form-control form-control-sm">
+                                </div>
+                            </div>
+                            <div class="mb-3">
+                                <label class="form-label small fw-bold">Emails de contact</label>
+                                <input type="email" name="email" class="form-control form-control-sm mb-2" placeholder="Email principal" required>
+                                <input type="email" name="email2" class="form-control form-control-sm mb-2" placeholder="Email secondaire">
+                                <input type="email" name="email3" class="form-control form-control-sm" placeholder="Email tertiaire">
+                            </div>
+                            <div class="mb-2">
+                                <label class="form-label small">Téléphone</label>
+                                <input type="text" name="telephone" class="form-control form-control-sm">
+                            </div>
+                            <button type="submit" class="btn btn-success btn-sm w-100 mt-2">Enregistrer</button>
+                        </form>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm">
+                    <div class="card-header bg-dark text-white">Liste des Clients</div>
+                    <div class="card-body p-0">
+                        <table class="table table-hover mb-0">
+                            <thead>
+                                <tr>
+                                    <th>Nom</th>
+                                    <th>Localisation</th>
+                                    <th>Contact</th>
+                                    <th class="text-center">Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for c in clients %}
+                                <tr>
+                                    <td><strong>{{ c.nom }}</strong></td>
+                                    <td>{{ c.code_postal }} {{ c.ville }}</td>
+                                    <td>
+                                        <div class="small">{{ c.email }}</div>
+                                        {% if c.email2 %}<div class="small text-muted">{{ c.email2 }}</div>{% endif %}
+                                        {% if c.email3 %}<div class="small text-muted">{{ c.email3 }}</div>{% endif %}
+                                    </td>
+                                    <td class="text-center">
+                                        <div class="btn-group">
+                                            <a href="{{ url_for('modifier_client', id=c.id) }}" class="btn btn-sm btn-outline-warning">✏️</a>
+                                            <a href="{{ url_for('supprimer_client', id=c.id) }}" 
+                                               class="btn btn-sm btn-outline-danger"
+                                               onclick="return confirm('Supprimer ce client ?')">🗑️</a>
+                                        </div>
+                                    </td>
+                                </tr>
+                                {% else %}
+                                <tr><td colspan="4" class="text-center text-muted p-4">Aucun client enregistré.</td></tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
+</body>
+</html>

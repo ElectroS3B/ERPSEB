@@ -1,0 +1,245 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📝 Modifier le BL : <span class="text-success">{{ livraison.numero_bl }}</span></h2>
+        <a href="/historique_livraisons" class="btn btn-outline-secondary btn-sm">Retour à l'historique</a>
+    </div>
+
+    <form method="POST">
+        <div class="row">
+            <div class="col-md-3">
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-dark text-white fw-bold">Infos Générales</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Client</label>
+                            <select name="client_id" id="client_selector" class="form-select form-select-sm" required>
+                                {% for c in clients %}
+                                <option value="{{ c.id }}" {% if c.id == livraison.client_id %}selected{% endif %}>{{ c.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Transporteur</label>
+                            <select name="transporteur_id" class="form-select form-select-sm" required>
+                                {% for t in transporteurs %}
+                                <option value="{{ t.id }}" {% if t.id == livraison.transporteur_id %}selected{% endif %}>{{ t.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold small">Date</label>
+                            <input type="date" name="date_livraison" class="form-control form-control-sm" 
+                                   value="{{ livraison.date_livraison.strftime('%Y-%m-%d') }}" required>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-9">
+                <div class="card shadow-sm mb-4 border-0">
+                    <div class="card-header bg-success text-white fw-bold">Lots sur ce BL</div>
+                    <div class="table-responsive">
+                        <table class="table align-middle mb-0" style="font-size: 0.85rem;" id="table-lots">
+                            <thead class="table-light">
+                                <tr>
+                                    <th>Lot</th>
+                                    <th>Produit</th>
+                                    <th>Calibre</th>
+                                    <th style="width: 80px;">Colis</th>
+                                    <th style="width: 100px;">Poids (kg)</th> 
+                                    <th style="width: 110px;">Prix HT/kg</th>
+                                    <th>Total HT</th>
+                                    <th>Action</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for d in livraison.details %}
+                                <tr class="ligne-existante">
+                                    <td><span class="badge bg-secondary">#{{ d.produit_id }}</span></td>
+                                    <td>
+                                        <strong>{{ d.produit_rel.type_rel.nom }}</strong><br>
+                                        <small class="text-muted">{{ d.produit_rel.variete_rel.nom }} | {{ d.produit_rel.cond_rel.nom }}</small>
+                                    </td>
+                                    <td><span class="badge border text-dark bg-light">{{ d.produit_rel.calibre_rel.nom }}</span></td>
+                                    
+                                    <td>
+                                        <input type="number" name="colis_{{ d.id }}" 
+                                               class="form-control form-control-sm input-colis-existant" 
+                                               value="{{ d.produit_rel.nb_unites }}">
+                                    </td>
+                                    
+                                    <td>
+                                        <input type="number" step="0.1" name="poids_lot_{{ d.produit_id }}" 
+                                               class="form-control form-control-sm fw-bold text-primary input-poids-existant" 
+                                               value="{{ d.produit_rel.poids_total }}">
+                                    </td>
+
+                                    <td>
+                                        <input type="number" step="0.001" name="prix_{{ d.id }}" 
+                                               class="form-control form-control-sm input-prix-existant" 
+                                               value="{{ d.prix_unitaire_ht }}">
+                                    </td>
+                                    
+                                    <td class="fw-bold"><span class="sous-total-ligne">0.00</span> €</td>
+                                    <td class="text-end">
+                                        <a href="{{ url_for('supprimer_ligne_bl', detail_id=d.id) }}" class="btn btn-sm btn-outline-danger" onclick="return confirm('Retirer ce lot ?')">🗑️</a>
+                                    </td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                            <tfoot>
+                                <tr class="table-dark">
+                                    <td colspan="4" class="text-end fw-bold">TOTAUX DU BL</td>
+                                    <td class="fw-bold"><span id="grand-poids">0.00</span> kg</td>
+                                    <td class="text-end fw-bold">TOTAL HT</td>
+                                    <td colspan="2" class="fw-bold text-warning"><span id="grand-total">0.00</span> €</td>
+                                </tr>
+                            </tfoot>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-warning" id="nouveau_lot_form">
+                    <div class="card-header bg-warning text-dark fw-bold small">➕ AJOUTER UN LOT HORS-STOCK</div>
+                    <div class="card-body bg-light">
+                        <div class="row g-2">
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Type / Variété</label>
+                                <select name="nouveau_type_id" id="hs_type" class="form-select form-select-sm mb-1">
+                                    <option value="">-- Type --</option>
+                                    {% for t in types %}<option value="{{ t.id }}">{{ t.nom }}</option>{% endfor %}
+                                </select>
+                                <select name="nouveau_variete_id" id="hs_variete" class="form-select form-select-sm">
+                                    <option value="">-- Variété --</option>
+                                    {% for v in varietes %}<option value="{{ v.id }}">{{ v.nom }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Calibre / Conditionnement</label>
+                                <select name="nouveau_calibre_id" id="hs_calibre" class="form-select form-select-sm mb-1">
+                                    <option value="">-- Calibre --</option>
+                                    {% for c in calibres %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+                                </select>
+                                <select name="nouveau_cond_id" id="hs_cond" class="form-select form-select-sm">
+                                    <option value="">-- Cond. --</option>
+                                    {% for co in conditionnements %}<option value="{{ co.id }}">{{ co.nom }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-3">
+                                <label class="small fw-bold">Parcelle / Prix HT</label>
+                                <select name="nouveau_parcelle_id" class="form-select form-select-sm mb-1">
+                                    {% for p in parcelles %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
+                                </select>
+                                <input type="number" step="0.001" name="nouveau_prix" id="hs_prix" class="form-control form-control-sm border-primary" placeholder="Tarif auto">
+                            </div>
+                            <div class="col-md-3 bg-white p-2 border rounded">
+                                <label class="small fw-bold">Colis x Poids Unit.</label>
+                                <div class="d-flex gap-1 mb-1">
+                                    <input type="number" id="hs_nb" name="nouveau_nb" class="form-control form-control-sm" value="1">
+                                    <input type="number" id="hs_unit" step="0.01" class="form-control form-control-sm" placeholder="Unit.">
+                                </div>
+                                <label class="small fw-bold text-danger">Total (kg)</label>
+                                <input type="number" id="hs_total" name="nouveau_poids" class="form-control form-control-sm fw-bold border-danger" readonly>
+                            </div>
+                            <div class="col-12 text-end mt-2">
+                                <button type="submit" name="action" value="ajouter_hors_stock" class="btn btn-warning fw-bold px-4 shadow-sm">
+                                    ➕ Valider l'ajout
+                                </button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+    
+                <button type="submit" name="action" value="enregistrer_tout" class="btn btn-primary btn-lg w-100 mt-4 shadow fw-bold">
+                    💾 ENREGISTRER TOUT LE BL
+                </button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSel = document.getElementById('client_selector');
+    const hsType = document.getElementById('hs_type');
+    const hsVariete = document.getElementById('hs_variete');
+    const hsCalibre = document.getElementById('hs_calibre');
+    const hsCond = document.getElementById('hs_cond');
+    const hsPrix = document.getElementById('hs_prix');
+    const hsNb = document.getElementById('hs_nb');
+    const hsUnit = document.getElementById('hs_unit');
+    const hsTotal = document.getElementById('hs_total');
+
+    // --- CALCULS TABLEAU DU HAUT (LIGNES EXISTANTES) ---
+    function updateTableTotals() {
+        let grandTotal = 0;
+        let grandPoids = 0;
+        document.querySelectorAll('.ligne-existante').forEach(tr => {
+            const poids = parseFloat(tr.querySelector('.input-poids-existant').value) || 0;
+            const prix = parseFloat(tr.querySelector('.input-prix-existant').value) || 0;
+            
+            const sousTotal = poids * prix;
+            tr.querySelector('.sous-total-ligne').textContent = sousTotal.toFixed(2);
+            
+            grandTotal += sousTotal;
+            grandPoids += poids;
+        });
+        document.getElementById('grand-total').textContent = grandTotal.toFixed(2);
+        document.getElementById('grand-poids').textContent = grandPoids.toFixed(2);
+    }
+
+    // Écouteur sur les inputs de prix, poids ET colis
+    document.querySelectorAll('.input-prix-existant, .input-poids-existant, .input-colis-existant').forEach(input => {
+        input.addEventListener('input', updateTableTotals);
+    });
+
+    // --- CALCULS HORS STOCK ---
+    function calculerPoidsHS() {
+        const nb = parseFloat(hsNb.value) || 0;
+        const unit = parseFloat(hsUnit.value) || 0;
+        hsTotal.value = (nb * unit).toFixed(2);
+    }
+
+    function fetchTarif() {
+        if (clientSel.value && hsType.value && hsVariete.value && hsCalibre.value && hsCond.value) {
+            const params = new URLSearchParams({
+                client_id: clientSel.value, type_id: hsType.value,
+                variete_id: hsVariete.value, calibre_id: hsCalibre.value, cond_id: hsCond.value
+            });
+            fetch(`/get_tarif_prix?${params.toString()}`)
+                .then(res => res.json())
+                .then(data => {
+                    if(data.prix > 0) {
+                        hsPrix.value = data.prix.toFixed(3);
+                        hsPrix.style.backgroundColor = "#e8f5e9";
+                    } else {
+                        hsPrix.value = "";
+                        hsPrix.style.backgroundColor = "#fff";
+                    }
+                });
+        }
+    }
+
+    function fetchPoidsDefaut() {
+        if (hsCond.value) {
+            fetch(`/get_poids_conditionnement?cond_id=${hsCond.value}`)
+                .then(res => res.json())
+                .then(data => {
+                    if (data.poids > 0) {
+                        hsUnit.value = data.poids;
+                        calculerPoidsHS();
+                    }
+                });
+        }
+    }
+
+    hsCond.addEventListener('change', () => { fetchPoidsDefaut(); fetchTarif(); });
+    [clientSel, hsType, hsVariete, hsCalibre].forEach(el => el.addEventListener('change', fetchTarif));
+    [hsNb, hsUnit].forEach(el => el.addEventListener('input', calculerPoidsHS));
+
+    updateTableTotals(); // Lancement initial
+});
+</script>
+{% endblock %}

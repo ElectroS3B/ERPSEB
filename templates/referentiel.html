@@ -1,0 +1,121 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="d-flex justify-content-between align-items-center mb-4">
+    <h2>📋 Référentiel des Données</h2>
+    <a href="/parametres" class="btn btn-outline-success btn-sm">➕ Ajouter des données</a>
+</div>
+
+<ul class="nav nav-tabs shadow-sm bg-white rounded-top" id="myTab" role="tablist">
+  <li class="nav-item"><button class="nav-link active" data-bs-toggle="tab" data-bs-target="#tabSoc">🏢 Société</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabProd">🚜 Producteurs & Parcelles</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabVariete">🍎 Types & Variétés</button></li>
+  <li class="nav-item"><button class="nav-link" data-bs-toggle="tab" data-bs-target="#tabCond">📦 Conditionnements</button></li>
+</ul>
+
+<div class="tab-content border-start border-end border-bottom p-4 bg-white rounded-bottom shadow-sm">
+  
+    <div class="tab-pane fade show active" id="tabSoc">
+        <div class="d-flex justify-content-between">
+            <h5>Informations de la Société</h5>
+        </div>
+        <hr>
+        {% if societe %}
+            <p><strong>Nom :</strong> {{ societe.nom }}</p>
+            <p><strong>Adresse :</strong> {{ societe.adresse }} {{ societe.code_postal }} {{ societe.ville }}</p>
+            <p><strong>Code CoC :</strong> {{ societe.coc_number if societe.coc_number else 'Non renseigné' }}</p>
+        {% else %}
+            <p class="text-danger">Aucune information société enregistrée.</p>
+        {% endif %}
+        <p class="text-muted small">Pour modifier la société, utilisez le formulaire dans Configuration.</p>
+    </div>
+
+  <div class="tab-pane fade" id="tabProd">
+    <h5>Producteurs</h5>
+    <table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Nom</th><th>GGN</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+            {% for p in producteurs %}
+            <tr>
+                <td>{{ p.nom }}</td>
+                <td><span class="badge bg-light text-dark border">{{ p.ggn }}</span></td>
+                <td class="text-end">
+                    <a href="{{ url_for('modifier_producteur', id=p.id) }}" class="btn btn-sm btn-warning">✏️</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    <h5 class="mt-4">Parcelles rattachées</h5>
+    <table class="table table-hover align-middle">
+        <thead class="table-light">
+            <tr>
+                <th>Parcelle</th>
+                <th>Producteur</th>
+                <th>GGN Parcelle</th> <th class="text-end">Actions</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for parcelle in parcelles %}
+            <tr>
+                <td>{{ parcelle.nom }}</td>
+                <td>{{ parcelle.producteur_rel.nom }}</td>
+                <td>
+                    {% if parcelle.ggn %}
+                        <span class="badge bg-info text-dark border">{{ parcelle.ggn }}</span>
+                    {% else %}
+                        <span class="text-muted small">Aucun (utilise celui du producteur)</span>
+                    {% endif %}
+                </td>
+                <td class="text-end">
+                    <a href="/modifier_parcelle/{{ parcelle.id }}" class="btn btn-sm btn-warning">✏️</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  </div>
+
+  <div class="tab-pane fade" id="tabVariete">
+    <table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Type de Produit</th><th>Variétés liées</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+            {% for t in types_prod %}
+            <tr>
+                <td><strong>{{ t.nom }}</strong></td>
+                <td>
+                    {% for v in t.varietes %}
+                        <div class="d-flex justify-content-between border-bottom py-1">
+                            <span>{{ v.nom }}</span>
+                            <a href="{{ url_for('modifier_variete', id=v.id) }}" class="text-warning text-decoration-none">✏️</a>
+                        </div>
+                    {% endfor %}
+                </td>
+                <td class="text-end">
+                    <a href="{{ url_for('modifier_type', id=t.id) }}" class="btn btn-sm btn-warning">✏️ Type</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  </div>
+
+  <div class="tab-pane fade" id="tabCond">
+    <h5>Types de Conditionnement</h5>
+    <table class="table table-hover align-middle">
+        <thead class="table-light"><tr><th>Désignation</th><th>Poids Unitaire</th><th class="text-end">Actions</th></tr></thead>
+        <tbody>
+            {% for c in conds %}
+            <tr>
+                <td>{{ c.nom }}</td>
+                <td>{{ c.poids_unite }} kg</td>
+                <td class="text-end">
+                    <a href="{{ url_for('modifier_conditionnement', id=c.id) }}" class="btn btn-sm btn-warning">✏️</a>
+                </td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+  </div>
+</div>
+{% endblock %}

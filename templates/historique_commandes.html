@@ -1,0 +1,137 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <div class="d-flex justify-content-between align-items-center mb-4">
+        <h2>📋 Liste des Commandes</h2>
+        <div>
+            <button type="button" onclick="imprimerRecap()" class="btn btn-outline-danger shadow-sm me-2">
+                🖨️ Imprimer Récapitulatif
+            </button>
+            <a href="{{ url_for('nouvelle_commande') }}" class="btn btn-primary shadow-sm">➕ Créer une Commande</a>
+        </div>
+    </div>
+
+    <div class="card bg-light mb-4 shadow-sm">
+        <div class="card-body">
+            <form id="filterForm" method="GET" action="{{ url_for('historique_commandes') }}" class="row g-3">
+                <div class="col-md-3">
+                    <label class="small fw-bold">Client</label>
+                    <select name="client_id" class="form-select form-select-sm">
+                        <option value="">Tous les clients</option>
+                        {% for c in clients %}
+                        <option value="{{ c.id }}" {% if f_client == c.id|string %}selected{% endif %}>{{ c.nom }}</option>
+                        {% endfor %}
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Statut</label>
+                    <select name="statut" class="form-select form-select-sm">
+                        <option value="">Tous</option>
+                        <option value="En attente" {% if f_statut == 'En attente' %}selected{% endif %}>En attente</option>
+                        <option value="Validée" {% if f_statut == 'Validée' %}selected{% endif %}>Validée</option>
+                        <option value="Expédiée" {% if f_statut == 'Expédiée' %}selected{% endif %}>Expédiée</option>
+                        <option value="Annulée" {% if f_statut == 'Annulée' %}selected{% endif %}>Annulée</option>
+                    </select>
+                </div>
+                <div class="col-md-2">
+                    <label class="small fw-bold">Du (Livraison)</label>
+                    <input type="date" 
+                           name="date_debut" 
+                           class="form-control form-control-sm" 
+                           value="{{ f_debut if f_debut and f_debut != 'None' else '' }}">
+                </div>
+                
+                <div class="col-md-2">
+                    <label class="small fw-bold">Au</label>
+                    <input type="date" 
+                           name="date_fin" 
+                           class="form-control form-control-sm" 
+                           value="{{ f_fin if f_fin and f_fin != 'None' else '' }}">
+                </div>
+                <div class="col-md-3 d-flex align-items-end">
+                    <button type="submit" class="btn btn-sm btn-dark w-100 me-2">🔍 Filtrer</button>
+                    <a href="{{ url_for('historique_commandes') }}" class="btn btn-sm btn-outline-secondary">Réinitialiser</a>
+                </div>
+            </form>
+        </div>
+    </div>
+
+    <div class="card shadow">
+        <div class="card-body p-0">
+            <table class="table table-hover align-middle mb-0">
+                <thead class="table-dark">
+                    <tr>
+                        <th>N° Commande</th>
+                        <th>Date Livraison Prévue</th>
+                        <th>Client</th>
+                        <th>Détail des Produits</th>
+                        <th>Statut</th>
+                        <th class="text-end">Actions</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    {% for cmd in commandes %}
+                    <tr>
+                        <td class="fw-bold">{{ cmd.numero_commande }}</td>
+                        <td>{{ cmd.date_livraison_souhaitee.strftime('%d/%m/%Y') }}</td>
+                        <td>{{ cmd.client_rel.nom }}</td>
+                        <td>
+                            <ul class="list-unstyled mb-0 small">
+                                {% for ligne in cmd.lignes %}
+                                <li>
+                                    • {{ ligne.type_rel.nom }} {{ ligne.variete_rel.nom }} 
+                                    {% if ligne.calibre_rel %}
+                                        <span class="badge bg-light text-dark border">{{ ligne.calibre_rel.nom }}</span>
+                                    {% endif %}
+                                    - {{ ligne.quantite }} {{ ligne.cond_rel.nom }}
+                                </li>
+                                {% endfor %}
+                            </ul>
+                        </td>
+                        <td>
+                            <span class="badge {% if cmd.statut == 'En attente' %}bg-warning text-dark{% else %}bg-success{% endif %}">
+                                {{ cmd.statut }}
+                            </span>
+                        </td>
+                        <td class="text-end">
+                            <div class="btn-group">
+                                <a href="{{ url_for('generer_pdf_commande', id=cmd.id) }}" target="_blank" class="btn btn-sm btn-outline-dark" title="Imprimer">
+                                    🖨️
+                                </a>
+                                <a href="{{ url_for('modifier_commande', id=cmd.id) }}" class="btn btn-sm btn-outline-primary" title="Modifier">✏️</a>
+                                <a href="{{ url_for('supprimer_commande', id=cmd.id) }}" 
+                                   class="btn btn-sm btn-outline-danger" 
+                                   title="Supprimer" 
+                                   onclick="return confirm('Êtes-vous sûr de vouloir supprimer cette commande ?')">🗑️</a>
+                            </div>
+                        </td>
+                    </tr>
+                    {% else %}
+                    <tr>
+                        <td colspan="6" class="text-center py-4 text-muted">
+                            Aucune commande pour le moment.
+                        </td>
+                    </tr>
+                    {% endfor %}
+                </tbody>
+            </table>
+        </div>
+    </div>
+</div>
+
+<script>
+function imprimerRecap() {
+    // 1. On récupère le formulaire de filtrage
+    const form = document.getElementById('filterForm');
+    // 2. On transforme les données du formulaire en paramètres d'URL (URLSearchParams)
+    const formData = new FormData(form);
+    const params = new URLSearchParams(formData);
+    
+    // 3. On ouvre la route d'impression dans un nouvel onglet avec les filtres
+    const url = "{{ url_for('imprimer_recap_commandes') }}?" + params.toString();
+    window.open(url, '_blank');
+}
+</script>
+
+{% endblock %}

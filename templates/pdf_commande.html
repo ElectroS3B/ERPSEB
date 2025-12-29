@@ -1,0 +1,69 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <meta charset="UTF-8">
+    <title>Commande {{ commande.numero_commande }}</title>
+    <style>
+        body { font-family: Arial, sans-serif; color: #333; }
+        .header { border-bottom: 2px solid #28a745; padding-bottom: 20px; margin-bottom: 30px; }
+        .row { display: flex; justify-content: space-between; }
+        .col { width: 48%; }
+        table { width: 100%; border-collapse: collapse; margin-top: 30px; }
+        th { background-color: #f2f2f2; text-align: left; padding: 10px; border-bottom: 2px solid #ddd; }
+        td { padding: 10px; border-bottom: 1px solid #eee; }
+        .footer { margin-top: 50px; font-size: 0.8em; text-align: center; color: #777; }
+        .badge { padding: 5px 10px; background: #eee; border-radius: 4px; font-size: 0.9em; }
+    </style>
+</head>
+<body>
+    <div class="header">
+        <h1>CONFIRMATION DE COMMANDE</h1>
+        <p>Référence : <strong>{{ commande.numero_commande }}</strong></p>
+    </div>
+
+    <div class="row">
+        <div class="col">
+            <p><strong>Destinataire :</strong><br>
+            {{ commande.client_rel.nom }}<br>
+            {{ commande.client_rel.adresse or '' }}</p>
+        </div>
+        <div class="col" style="text-align: right;">
+            <p><strong>Date de commande :</strong> {{ commande.date_creation.strftime('%d/%m/%Y') }}<br>
+            <strong>Livraison souhaitée :</strong> {{ commande.date_livraison_souhaitee.strftime('%d/%m/%Y') }}<br>
+            <strong>Transporteur :</strong> {{ commande.transporteur_rel.nom if commande.transporteur_rel else 'À définir' }}</p>
+        </div>
+    </div>
+
+    <table>
+        <thead>
+            <tr>
+                <th>Produit / Variété</th>
+                <th>Calibre</th>
+                <th>Conditionnement</th>
+                <th style="text-align: right;">Quantité</th>
+            </tr>
+        </thead>
+        <tbody>
+            {% for ligne in commande.lignes %}
+            <tr>
+                <td>{{ ligne.type_rel.nom }} - {{ ligne.variete_rel.nom }}</td>
+                <td>{{ ligne.calibre_rel.nom if ligne.calibre_rel else '-' }}</td>
+                <td>{{ ligne.cond_rel.nom }}</td>
+                <td style="text-align: right;"><strong>{{ ligne.quantite }}</strong></td>
+            </tr>
+            {% endfor %}
+        </tbody>
+    </table>
+
+    {% if commande.observations %}
+    <div style="margin-top: 30px; padding: 15px; background: #f9f9f9; border-left: 4px solid #28a745;">
+        <strong>Observations :</strong><br>
+        {{ commande.observations }}
+    </div>
+    {% endif %}
+
+    <div class="footer">
+        Document généré le {{ commande.date_creation.strftime('%d/%m/%Y') }} - Logiciel AgriStock
+    </div>
+</body>
+</html>

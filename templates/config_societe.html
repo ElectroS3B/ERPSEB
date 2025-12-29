@@ -1,0 +1,35 @@
+{% extends 'base.html' %}
+{% block content %}
+<div class="container mt-4">
+    <div class="card shadow col-md-6 mx-auto">
+        <div class="card-header bg-dark text-white fw-bold">Paramètres de l'entreprise</div>
+        <div class="card-body">
+            <form method="POST">
+                <div class="mb-3">
+                    <label class="form-label">Nom de l'exploitation</label>
+                    <input type="text" name="nom" class="form-control" value="{{ soc.nom if soc else '' }}" required>
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Numéro CoC (GlobalGAP)</label>
+                    <input type="text" name="coc_number" class="form-control" value="{{ soc.coc_number if soc else '' }}">
+                </div>
+                <div class="mb-3">
+                    <label class="form-label">Adresse</label>
+                    <textarea name="adresse" class="form-control">{{ soc.adresse if soc else '' }}</textarea>
+                </div>
+                <div class="row">
+                    <div class="col-4 mb-3">
+                        <label class="form-label">CP</label>
+                        <input type="text" name="code_postal" class="form-control" value="{{ soc.code_postal if soc else '' }}">
+                    </div>
+                    <div class="col-8 mb-3">
+                        <label class="form-label">Ville</label>
+                        <input type="text" name="ville" class="form-control" value="{{ soc.ville if soc else '' }}">
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary w-100">Enregistrer les paramètres</button>
+            </form>
+        </div>
+    </div>
+</div>
+{% endblock %}

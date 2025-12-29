@@ -1,0 +1,342 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<div class="container mt-4">
+    <h2 class="mb-4">🚚 Créer une Nouvelle Livraison</h2>
+
+    <form method="POST" id="livraisonForm">
+        <div class="row">
+            <div class="col-md-4">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-success text-white fw-bold">Informations Générales</div>
+                    <div class="card-body">
+                        <div class="mb-3">
+                            <label class="form-label">Client</label>
+                            <select name="client_id" id="clientSelect" class="form-select" required>
+                                <option value="">-- Sélectionner un client --</option>
+                                {% for c in clients %}
+                                <option value="{{ c.id }}">{{ c.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Transporteur</label>
+                            <select name="transporteur_id" class="form-select" required>
+                                {% for t in transporteurs %}
+                                <option value="{{ t.id }}">{{ t.nom }}</option>
+                                {% endfor %}
+                            </select>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label">Date de livraison</label>
+                            <input type="date" name="date_livraison" class="form-control" value="{{ date_defaut }}" required>
+                        </div>
+                        <div class="mb-3">
+                            <label class="form-label fw-bold text-danger">Observations</label>
+                            <textarea name="observations" class="form-control" rows="3" placeholder="Ex: Livraison quai n°2..."></textarea>
+                        </div>
+                    </div>
+                </div>
+            </div>
+
+            <div class="col-md-8">
+                <div class="card shadow-sm mb-4">
+                    <div class="card-header bg-dark text-white d-flex justify-content-between align-items-center">
+                        <span>Sélectionner dans le Stock</span>
+                        <input type="text" id="stockSearch" class="form-control form-control-sm w-50" placeholder="🔍 Rechercher un lot...">
+                    </div>
+                    <div class="table-responsive" style="max-height: 300px;">
+                        <table class="table table-hover align-middle small" id="stockTable">
+                            <thead class="table-light sticky-top">
+                                <tr>
+                                    <th>Sel.</th>
+                                    <th>N° Lot</th>
+                                    <th>Produit / Variété</th>
+                                    <th>Cond.</th> 
+                                    <th style="width: 130px;">Poids Total</th> 
+                                    <th style="width: 100px;">Prix HT</th>
+                                    <th class="text-end">Total</th>
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {% for p in stock %}
+                                <tr class="stock-row-item">
+                                    <td>
+                                        <input type="checkbox" name="lots" value="{{ p.id }}" 
+                                               class="lot-checkbox form-check-input"
+                                               data-lot="{{ p.id }}"
+                                               data-nom="{{ p.type_rel.nom }} {{ p.variete_rel.nom }}"
+                                               data-type-id="{{ p.type_id }}"
+                                               data-variete-id="{{ p.variete_id }}"
+                                               data-calibre-id="{{ p.calibre_id }}"
+                                               data-cond-id="{{ p.cond_id }}"
+                                               data-calibre-nom="{{ p.calibre_rel.nom }}"
+                                               data-cond-nom="{{ p.cond_rel.nom }}"
+                                               data-poids-unitaire="{{ p.cond_rel.poids_par_unite }}">
+                                    </td>
+                                    <td class="text-primary fw-bold">#{{ p.id }}</td>
+                                    <td><strong>{{ p.type_rel.nom }}</strong> - {{ p.variete_rel.nom }}<br><span class="badge bg-info text-dark">Cal: {{ p.calibre_rel.nom }}</span></td>
+                                    <td><span class="badge border text-dark">{{ p.cond_rel.nom }}</span></td> 
+                                    <td>
+                                        <div class="input-group input-group-sm">
+                                            <input type="number" step="0.1" name="poids_lot_{{ p.id }}" value="{{ p.poids_total }}" class="form-control fw-bold text-primary poids-input">
+                                            <span class="input-group-text">kg</span>
+                                        </div>
+                                    </td>
+                                    <td><input type="number" name="prix_{{ p.id }}" class="form-control form-control-sm prix-input" step="0.001" value="0.000" readonly></td>
+                                    <td class="text-end fw-bold"><span class="total-ligne">0.00</span> €</td>
+                                </tr>
+                                {% endfor %}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-warning mb-4">
+                    <div class="card-header bg-warning text-dark fw-bold">🚀 Saisie Express Hors-Stock</div>
+                    <div class="card-body bg-light p-2">
+                        <div class="row g-2">
+                            <div class="col-md-3"> 
+                                <select id="hs_type" class="form-select form-select-sm mb-1">
+                                    <option value="">-- Type --</option>
+                                    {% for t in types %}<option value="{{ t.id }}">{{ t.nom }}</option>{% endfor %}
+                                </select>
+                                <select id="hs_variete" class="form-select form-select-sm">
+                                    <option value="">-- Variété --</option>
+                                    {% for v in varietes %}<option value="{{ v.id }}" data-type="{{ v.type_produit_id }}">{{ v.nom }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-2"> 
+                                <select id="hs_cond" class="form-select form-select-sm mb-1">
+                                    <option value="">-- Cond. --</option>
+                                    {% for co in conditionnements %}<option value="{{ co.id }}">{{ co.nom }}</option>{% endfor %}
+                                </select>
+                                <select id="hs_calibre" class="form-select form-select-sm">
+                                    <option value="">-- Calibre --</option>
+                                    {% for c in calibres %}<option value="{{ c.id }}">{{ c.nom }}</option>{% endfor %}
+                                </select>
+                            </div>
+                            <div class="col-md-4"> 
+                                <div class="input-group input-group-sm mb-1">
+                                    <span class="input-group-text">Nb Colis</span>
+                                    <input type="number" id="hs_nb" class="form-control" value="1">
+                                    <span class="input-group-text">kg/u</span>
+                                    <input type="number" id="hs_unit" step="0.01" class="form-control" placeholder="0.00">
+                                </div>
+                                <div class="d-flex align-items-center">
+                                    <input type="number" step="0.001" id="hs_prix" class="form-control form-control-sm" placeholder="Prix HT/kg">
+                                    <div class="ms-2 flex-grow-1 text-center border rounded bg-dark text-white fw-bold py-1" id="hs_poids_label" style="min-width: 80px;">0.00 kg</div>
+                                </div>
+                            </div>
+                            <div class="col-md-3"> 
+                                <select id="hs_parcelle" class="form-select form-select-sm mb-1">
+                                    {% for p in parcelles %}<option value="{{ p.id }}">{{ p.nom }}</option>{% endfor %}
+                                </select>
+                                <button type="button" id="btn_ajouter_hs" class="btn btn-warning btn-sm w-100 fw-bold">➕ AJOUTER</button>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+
+                <div class="card shadow-sm border-primary mb-4">
+                    <div class="card-header bg-primary text-white d-flex justify-content-between align-items-center">
+                        <span class="fw-bold">📋 CONTENU DU BON DE LIVRAISON</span>
+                        <span id="totalGeneral" class="badge bg-white text-primary fs-6">Total : 0.00 € HT</span>
+                    </div>
+                    <table class="table table-sm table-striped mb-0">
+                        <thead class="table-secondary small">
+                            <tr>
+                                <th>Origine</th>
+                                <th>Lot</th>
+                                <th>Produit</th>
+                                <th>Calibre</th>
+                                <th class="text-center">Colis</th>
+                                <th>Poids Total</th>
+                                <th>Prix Unit.</th>
+                                <th class="text-end">Sous-total</th>
+                                <th></th>
+                            </tr>
+                        </thead>
+                        <tbody id="recap_body">
+                            <tr id="empty_row"><td colspan="9" class="text-center text-muted">Aucun article sélectionné</td></tr>
+                        </tbody>
+                    </table>
+                </div>
+
+                <div id="hs_hidden_inputs"></div>
+                <button type="submit" class="btn btn-success btn-lg w-100 shadow">🚀 Valider la Livraison</button>
+            </div>
+        </div>
+    </form>
+</div>
+
+<script>
+document.addEventListener('DOMContentLoaded', function() {
+    const clientSelect = document.getElementById('clientSelect');
+    const hsType = document.getElementById('hs_type');
+    const hsVariete = document.getElementById('hs_variete');
+    const hsCalibre = document.getElementById('hs_calibre');
+    const hsCond = document.getElementById('hs_cond');
+    const hsNb = document.getElementById('hs_nb');
+    const hsUnit = document.getElementById('hs_unit');
+    const hsPrix = document.getElementById('hs_prix');
+    const hsParcelle = document.getElementById('hs_parcelle');
+    const recapBody = document.getElementById('recap_body');
+    const hsHiddenContainer = document.getElementById('hs_hidden_inputs');
+    let hs_counter = 0;
+
+    // --- FILTRE VARIÉTÉS ---
+    const allVarietes = Array.from(hsVariete.options).map(o => ({ v: o.value, t: o.text, tid: o.getAttribute('data-type') }));
+    hsType.addEventListener('change', function() {
+        const tid = this.value;
+        hsVariete.innerHTML = '<option value="">-- Variété --</option>';
+        allVarietes.forEach(x => {
+            if (x.v && (!tid || String(x.tid) === String(tid))) hsVariete.add(new Option(x.t, x.v));
+        });
+        fetchTarifHS();
+    });
+
+    // --- MISE À JOUR RÉCAPITULATIF ---
+    function updateRecap() {
+        recapBody.querySelectorAll('.stock-added-row').forEach(r => r.remove());
+        let totalGeneral = 0;
+
+        document.querySelectorAll('.lot-checkbox:checked').forEach(cb => {
+            const row = cb.closest('tr');
+            const poidsTotal = parseFloat(row.querySelector('.poids-input').value) || 0;
+            const prixKg = parseFloat(row.querySelector('.prix-input').value) || 0;
+            
+            const pUnitaire = parseFloat(cb.dataset.poidsUnitaire) || 0;
+            const nbColis = (pUnitaire > 0) ? Math.round(poidsTotal / pUnitaire) : 1;
+            
+            const sousTotal = poidsTotal * prixKg;
+            totalGeneral += sousTotal;
+            row.querySelector('.total-ligne').innerText = sousTotal.toFixed(2);
+
+            const tr = document.createElement('tr');
+            tr.className = 'stock-added-row align-middle';
+            tr.innerHTML = `
+                <td><span class="badge bg-secondary">Stock</span></td>
+                <td>#${cb.dataset.lot}</td>
+                <td><strong>${cb.dataset.nom}</strong><br><small class="text-muted">${cb.dataset.condNom}</small></td>
+                <td>${cb.dataset.calibreNom}</td>
+                <td class="text-center fw-bold text-primary">${nbColis}</td>
+                <td>${poidsTotal.toFixed(2)} kg</td>
+                <td>${prixKg.toFixed(3)} €</td>
+                <td class="text-end fw-bold">${sousTotal.toFixed(2)} €</td>
+                <td></td>`;
+            recapBody.appendChild(tr);
+        });
+
+        document.querySelectorAll('.hs-line-total').forEach(td => {
+            totalGeneral += parseFloat(td.dataset.val) || 0;
+        });
+
+        document.getElementById('totalGeneral').innerText = `Total : ${totalGeneral.toFixed(2)} € HT`;
+        document.getElementById('empty_row').style.display = (recapBody.querySelectorAll('tr:not(#empty_row)').length > 0) ? 'none' : '';
+    }
+
+    // --- API TARIFS & POIDS ---
+    function fetchPrixAPI(params, targetInput) {
+        if (!clientSelect.value || !params.type_id) return;
+        const q = new URLSearchParams({ client_id: clientSelect.value, ...params });
+        fetch(`/get_tarif_prix?${q}`).then(r => r.json()).then(d => {
+            targetInput.value = (d.prix > 0) ? d.prix.toFixed(3) : "0.000";
+            updateRecap();
+        });
+    }
+
+    const fetchTarifHS = () => { 
+        if (clientSelect.value && hsType.value && hsVariete.value) 
+            fetchPrixAPI({ type_id: hsType.value, variete_id: hsVariete.value, calibre_id: hsCalibre.value, cond_id: hsCond.value }, hsPrix); 
+    };
+
+    // --- ÉCOUTEURS HORS-STOCK ---
+    const calcHSLabel = () => { 
+        const total = (parseFloat(hsNb.value)||0) * (parseFloat(hsUnit.value)||0);
+        document.getElementById('hs_poids_label').innerText = total.toFixed(2) + " kg"; 
+    };
+
+    hsCond.addEventListener('change', function() {
+        if(!this.value) return;
+        fetch(`/get_poids_conditionnement?cond_id=${this.value}`)
+            .then(res => res.json())
+            .then(data => {
+                hsUnit.value = (data.poids > 0) ? data.poids : "";
+                calcHSLabel();
+                fetchTarifHS();
+            });
+    });
+
+    [hsNb, hsUnit].forEach(el => el.addEventListener('input', calcHSLabel));
+    [hsType, hsVariete, hsCalibre].forEach(el => el.addEventListener('change', fetchTarifHS));
+
+    // --- ACTIONS BOUTONS ---
+    document.getElementById('btn_ajouter_hs').addEventListener('click', function() {
+        const nb = parseFloat(hsNb.value) || 0;
+        const unit = parseFloat(hsUnit.value) || 0;
+        const px = parseFloat(hsPrix.value) || 0;
+        if (!hsType.value || nb <= 0) return alert("Veuillez remplir le type et le nombre de colis.");
+
+        const pTotal = nb * unit;
+        const st = pTotal * px;
+        const id = hs_counter++;
+
+        const tr = document.createElement('tr');
+        tr.id = `hs_row_${id}`;
+        tr.className = "align-middle";
+        tr.innerHTML = `
+            <td><span class="badge bg-warning text-dark">H-S</span></td>
+            <td>-</td>
+            <td><strong>${hsType.options[hsType.selectedIndex].text}</strong><br><small>${hsCond.options[hsCond.selectedIndex].text}</small></td>
+            <td>${hsCalibre.options[hsCalibre.selectedIndex].text}</td>
+            <td class="text-center fw-bold text-primary">${nb}</td>
+            <td>${pTotal.toFixed(2)} kg</td>
+            <td>${px.toFixed(3)} €</td>
+            <td class="text-end fw-bold hs-line-total" data-val="${st}">${st.toFixed(2)} €</td>
+            <td><button type="button" class="btn btn-sm btn-outline-danger" onclick="removeHS(${id})">×</button></td>`;
+        recapBody.appendChild(tr);
+
+        const div = document.createElement('div');
+        div.id = `hs_hid_${id}`;
+        div.innerHTML = `
+            <input type="hidden" name="hs_type[]" value="${hsType.value}"><input type="hidden" name="hs_variete[]" value="${hsVariete.value}">
+            <input type="hidden" name="hs_cond[]" value="${hsCond.value}"><input type="hidden" name="hs_calibre[]" value="${hsCalibre.value}">
+            <input type="hidden" name="hs_nb[]" value="${nb}"><input type="hidden" name="hs_poids[]" value="${pTotal}">
+            <input type="hidden" name="hs_prix[]" value="${px}"><input type="hidden" name="hs_parcelle[]" value="${hsParcelle.value}">`;
+        hsHiddenContainer.appendChild(div);
+        updateRecap();
+    });
+
+    window.removeHS = (id) => {
+        document.getElementById(`hs_row_${id}`).remove();
+        document.getElementById(`hs_hid_${id}`).remove();
+        updateRecap();
+    };
+
+    // --- ÉCOUTEURS STOCK ---
+    document.querySelectorAll('.lot-checkbox').forEach(cb => {
+        cb.addEventListener('change', function() {
+            const row = this.closest('tr');
+            const inp = row.querySelector('.prix-input');
+            if (this.checked) {
+                inp.readOnly = false;
+                fetchPrixAPI({ type_id: this.dataset.typeId, variete_id: this.dataset.varieteId, calibre_id: this.dataset.calibreId, cond_id: this.dataset.condId }, inp);
+            } else {
+                inp.value = "0.000"; inp.readOnly = true; updateRecap();
+            }
+        });
+    });
+
+    document.querySelectorAll('.poids-input, .prix-input').forEach(el => el.addEventListener('input', updateRecap));
+
+    // Recherche
+    document.getElementById('stockSearch').addEventListener('keyup', function() {
+        const term = this.value.toLowerCase();
+        document.querySelectorAll('#stockTable tbody tr').forEach(row => {
+            row.style.display = row.innerText.toLowerCase().includes(term) ? "" : "none";
+        });
+    });
+});
+</script>
+{% endblock %}
